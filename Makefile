@@ -9,6 +9,9 @@ all: wipers.hex
 dump: wipers.elf
 	avr-objdump -d $< | less
 
+upgrade:
+	curl --silent https://raw.githubusercontent.com/micronucleus/micronucleus/v2.5/firmware/upgrades/upgrade-t85_default.hex | micronucleus --run -
+
 run: wipers.hex
 	micronucleus --run $<
 
