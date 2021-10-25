@@ -7,7 +7,7 @@
 
 #define DEFAULT_PERIOD (30) // 30 timer ticks -> 7.5 seconds
 #define MINIMUM_PERIOD (10) // 10 timer ticks -> 2.5 seconds
-#define PULSE_DURATION  (2) //  2 timer ticks -> 0.5 seconds
+#define PULSE_DURATION  (1) //  1 timer tick -> 0.25 seconds
 
 int main() {
 	cli();                  // disable interrupts
@@ -36,13 +36,11 @@ ISR(PCINT0_vect) {
 	TCCR1 = 0; // disable timer
 	if (PINB & _BV(PINB0)) {
 		// PB0 high => intermittent wiper switch released
-		PORTB &= ~_BV(PORTB1);  // turn off PB1
 		TIFR  = _BV(TOV1);      // clear timer overflow
 		TIMSK = _BV(TOIE1);     // enable timer overflow interrupt
 		TCCR1 = TIMER_PRESCALE; // start timer with prescale
 	} else {
 		// PB0 low => intermittent wiper switch engaged
-		PORTB |= _BV(PORTB1);   // turn on PB1
 		uint8_t period = TCNT1; // get timed period
 		if (period < MINIMUM_PERIOD)
 			period = MINIMUM_PERIOD;
