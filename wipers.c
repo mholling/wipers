@@ -33,14 +33,9 @@ int main() {
 
 // pin-change ISR for PB0
 ISR(PCINT0_vect) {
-	TCCR1 = 0; // disable timer
-	if (PINB & _BV(PINB0)) {
-		// PB0 high => intermittent wiper switch released
-		TIFR  = _BV(TOV1);      // clear timer overflow
-		TIMSK = _BV(TOIE1);     // enable timer overflow interrupt
-		TCCR1 = TIMER_PRESCALE; // start timer with prescale
-	} else {
+	if (!(PINB & _BV(PINB0))) {
 		// PB0 low => intermittent wiper switch engaged
+		TCCR1 = 0;              // disable timer
 		uint8_t period = TCNT1; // get timed period
 		if (period < MINIMUM_PERIOD)
 			period = MINIMUM_PERIOD;
@@ -51,8 +46,17 @@ ISR(PCINT0_vect) {
 		TCCR1 = _BV(PWM1A) |    // set PWM mode
 		        _BV(COM1A1) |   // set PWM output polarity
 		        TIMER_PRESCALE; // start PWM with prescale
+		MCUCR = _BV(SE);        // enable sleep, set sleep mode to idle
+	} else if (!TCCR1) {
+		// PB0 high => intermittent wiper switch released, but
+		// TCCR1 zero => switch has been engaged since startup
+	} else {
+		// PB0 high => intermittent wiper switch released
+		TIFR  = _BV(TOV1);      // clear timer overflow
+		TIMSK = _BV(TOIE1);     // enable timer overflow interrupt
+		TCCR1 = TIMER_PRESCALE; // start timer with prescale
+		MCUCR = _BV(SE);        // enable sleep, set sleep mode to idle
 	}
-	MCUCR = _BV(SE); // enable sleep, set sleep mode to idle
 }
 
 // timer overflow ISR
